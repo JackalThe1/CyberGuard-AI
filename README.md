@@ -1,4 +1,4 @@
-# 🔒 CyberGuard AI — Cross-Platform MVP
+# 🔒 CyberGuard AI — Cross-Platform
 
 **Autonomous cybersecurity operations platform with AI-powered threat detection.**
 
@@ -25,14 +25,14 @@ Python 3.9+ (https://www.python.org/downloads/)
 
 **Windows (CMD / PowerShell):**
 ```cmd
-cd cyberguard-ai-mvp
+cd CyberGuard-AI
 copy .env.example .env
 notepad .env
 ```
 
 **macOS / Linux:**
 ```bash
-cd cyberguard-ai-mvp
+cd CyberGuard-AI
 cp .env.example .env
 nano .env
 ```
