@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CyberGuard AI — Security Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --s0:#0b0f18;--s1:#101520;--s2:#141a26;--s3:#1a2235;--s4:#202840;--s5:#263050;
+  --b0:#1e2d42;--b1:#263550;--b2:#2e3f60;
+  --t0:#f0f4f8;--t1:#c0d0e0;--t2:#7090a8;--t3:#3a5068;
+  --brand:#2d7ef7;--brand-d:#1a5bc4;--brand-l:#6aa8ff;--bxs:rgba(45,126,247,.12);
+  --critical:#e84057;--high:#f07030;--medium:#e8b030;--low:#30c48a;
+  --cm:rgba(232,64,87,.12);--hm:rgba(240,112,48,.12);--mm:rgba(232,176,48,.12);--lm:rgba(48,196,138,.12);
+  --fn:'Outfit',sans-serif;--fm:'IBM Plex Mono',monospace;
+  --r:6px;--rl:10px;
+}
+html{font-size:14px}
+body{background:var(--s0);color:var(--t0);font-family:var(--fn);min-height:100vh;display:flex;-webkit-font-smoothing:antialiased}
+
+/* layout */
+.sidebar{width:230px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--b0);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* sidebar */
+.sb-logo{padding:18px 16px 15px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
+.sb-mark{width:32px;height:32px;background:var(--brand);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(45,126,247,.4);flex-shrink:0}
+.sb-name{font-size:.82rem;font-weight:700;color:var(--t0);line-height:1.2}
+.sb-sub{font-size:.58rem;color:var(--t2)}
+.nav-sec{padding:14px 10px 5px}
+.nav-lbl{font-size:.57rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:0 8px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r);font-size:.8rem;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s;margin-bottom:1px;user-select:none}
+.nav-item:hover{background:var(--s3);color:var(--t0)}
+.nav-item.active{background:rgba(45,126,247,.15);color:var(--brand-l)}
+.nav-ic{font-size:.84rem;width:17px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--critical);color:#fff;font-size:.57rem;font-weight:700;padding:2px 5px;border-radius:8px;min-width:16px;text-align:center}
+.sb-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--b0)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot.on{background:var(--low);box-shadow:0 0 5px var(--low)}.dot.off{background:var(--critical)}.dot.warn{background:var(--medium)}
+
+/* topbar */
+.topbar{background:var(--s1);border-bottom:1px solid var(--b0);padding:0 22px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100}
+.bc{display:flex;align-items:center;gap:5px;font-size:.74rem;color:var(--t2)}
+.bc span{color:var(--t0);font-weight:500}
+.tb-right{display:flex;align-items:center;gap:9px}
+.tb-pill{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--b0);border-radius:20px;padding:4px 10px;font-size:.68rem;color:var(--t1)}
+.tb-clock{font-family:var(--fm);font-size:.67rem;color:var(--t2)}
+.ips-badge{font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(48,196,138,.15);color:var(--low);border:1px solid rgba(48,196,138,.3)}
+
+/* content */
+.content{padding:22px;flex:1;overflow-y:auto}
+.page{display:none;flex-direction:column;gap:18px}
+.page.active{display:flex}
+
+/* page header */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.ph-t{font-size:1.25rem;font-weight:700;color:var(--t0);letter-spacing:-.02em}
+.ph-d{font-size:.74rem;color:var(--t2);margin-top:2px}
+.ph-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;font-family:var(--fn);font-size:.74rem;font-weight:600;padding:7px 13px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn-primary:hover:not(:disabled){background:var(--brand-d)}
+.btn-ghost{background:transparent;color:var(--t2);border-color:var(--b0)}
+.btn-ghost:hover{background:var(--s2);color:var(--t1);border-color:var(--b1)}
+.btn-danger{background:transparent;color:var(--critical);border-color:rgba(232,64,87,.3)}
+.btn-danger:hover{background:var(--cm)}
+.btn-success{background:rgba(48,196,138,.1);color:var(--low);border-color:rgba(48,196,138,.3)}
+.btn-success:hover{background:rgba(48,196,138,.2)}
+.btn-warn{background:rgba(232,176,48,.1);color:var(--medium);border-color:rgba(232,176,48,.3)}
+.btn-sm{padding:5px 10px;font-size:.69rem}
+.btn-xs{padding:3px 7px;font-size:.63rem}
+
+/* stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:11px}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--s2);border:1px solid var(--b0);border-radius:var(--rl);padding:16px;transition:border-color .2s;position:relative;overflow:hidden}
+.stat:hover{border-color:var(--b2)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat.sr::before{background:linear-gradient(90deg,transparent,var(--critical),transparent)}
+.stat.sb::before{background:linear-gradient(90deg,transparent,var(--brand),transparent)}
+.stat.so::before{background:linear-gradient(90deg,transparent,var(--high),transparent)}
+.stat.sg::before{background:linear-gradient(90deg,transparent,var(--low),transparent)}
+.stat.sy::before{background:linear-gradient(90deg,transparent,var(--medium),transparent)}
+.stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.stat-ic{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.ic-r{background:var(--cm)}.ic-b{background:var(--bxs)}.ic-o{background:var(--hm)}.ic-g{background:var(--lm)}.ic-y{background:var(--mm)}
+.stat-val{font-size:1.8rem;font-weight:700;letter-spacing:-.04em;color:var(--t0);line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:.68rem;color:var(--t2);font-weight:500}
+
+/* card */
+.card{background:var(--s2);border:1px solid var(--b0);border-radius:var(--rl);overflow:hidden}
+.card-hd{padding:13px 18px;border-bottom:1px solid var(--b0);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-size:.84rem;font-weight:600;color:var(--t0)}
+.card-sub{font-size:.69rem;color:var(--t2);margin-top:1px}
+.card-acts{display:flex;gap:6px;align-items:center}
+.card-body{padding:16px}
+.card-flush{padding:0}
+
+/* two-col */
+.two-col{display:grid;grid-template-columns:1fr 295px;gap:16px;align-items:start}
+@media(max-width:1060px){.two-col{grid-template-columns:1fr}}
+.col-stack{display:flex;flex-direction:column;gap:16px}
+
+/* upload */
+.upload-zone{border:1.5px dashed var(--b1);border-radius:var(--r);padding:26px 18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--brand);background:rgba(45,126,247,.04)}
+.upload-zone input{display:none}
+.uz-ic{width:42px;height:42px;background:var(--s3);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:0 auto 11px}
+.uz-title{font-size:.82rem;font-weight:600;color:var(--t1);margin-bottom:3px}
+.uz-hint{font-size:.68rem;color:var(--t2)}
+.uz-file{margin-top:9px;display:inline-flex;align-items:center;gap:6px;background:rgba(45,126,247,.1);border:1px solid rgba(45,126,247,.25);border-radius:var(--r);padding:5px 10px;font-size:.7rem;font-family:var(--fm);color:var(--brand-l)}
+
+/* alert banners */
+.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 13px;border-radius:var(--r);font-size:.74rem;font-weight:500;margin-top:10px}
+.alert.info{background:rgba(45,126,247,.1);border:1px solid rgba(45,126,247,.25);color:#7ab8ff}
+.alert.success{background:var(--lm);border:1px solid rgba(48,196,138,.3);color:#6eddb4}
+.alert.error{background:var(--cm);border:1px solid rgba(232,64,87,.3);color:#f08090}
+.alert.warning{background:var(--mm);border:1px solid rgba(232,176,48,.3);color:#e8c870}
+.pb{height:2px;background:var(--b0);margin-top:8px;border-radius:1px;overflow:hidden}
+.pb-fill{height:100%;background:var(--brand);border-radius:1px;animation:sc 1.4s ease-in-out infinite}
+@keyframes sc{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.74rem}
+thead th{padding:8px 13px;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t2);border-bottom:1px solid var(--b0);white-space:nowrap;background:rgba(10,14,22,.5)}
+tbody tr{border-bottom:1px solid var(--b0);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--s3)}
+tbody td{padding:9px 13px;color:var(--t1);vertical-align:middle}
+tbody tr.ddos-row{background:rgba(232,64,87,.06)}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:3px;font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.bdot{width:4px;height:4px;border-radius:50%}
+.badge.critical{background:var(--cm);color:var(--critical)}
+.badge.high{background:var(--hm);color:var(--high)}
+.badge.medium{background:var(--mm);color:var(--medium)}
+.badge.low{background:var(--lm);color:var(--low)}
+.badge.info{background:var(--bxs);color:var(--brand-l)}
+
+/* confidence bar */
+.cf-bar{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:.69rem}
+.cf-track{flex:1;height:3px;background:var(--s4);border-radius:2px;overflow:hidden;min-width:45px}
+.cf-fill{height:100%;border-radius:2px;transition:width .6s}
+
+/* drawer */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:550px;max-width:95vw;background:var(--s1);border-left:1px solid var(--b1);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 40px rgba(0,0,0,.5)}
+.drawer.open{transform:translateX(0)}
+.drawer-hd{padding:18px 22px;border-bottom:1px solid var(--b0);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-shrink:0}
+.drawer-body{flex:1;overflow-y:auto;padding:22px}
+.close-btn{background:var(--s3);border:1px solid var(--b1);color:var(--t2);cursor:pointer;width:30px;height:30px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;transition:all .15s}
+.close-btn:hover{background:var(--s4);color:var(--t0)}
+.d-sec{margin-bottom:22px}
+.d-sec-t{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--b0)}
+.d-kv{display:grid;grid-template-columns:120px 1fr;gap:8px 0}
+.d-k{font-size:.7rem;color:var(--t2);font-weight:500;padding:3px 0}
+.d-v{font-size:.76rem;color:var(--t1);padding:3px 0}
+.code-block{background:var(--s0);border:1px solid var(--b0);border-radius:var(--r);padding:10px 13px;font-family:var(--fm);font-size:.66rem;color:var(--t1);overflow-x:auto;white-space:pre;line-height:1.6}
+.fw-row{margin-bottom:10px}
+.fw-lbl{font-size:.6rem;font-weight:700;color:var(--t2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.fw-code{background:var(--s0);border:1px solid var(--b0);border-radius:var(--r);padding:8px 12px;font-family:var(--fm);font-size:.65rem;color:#7fc8a0;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:all .15s;overflow:hidden}
+.fw-code:hover{border-color:var(--b2);background:rgba(127,200,160,.04)}
+.fw-code-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fw-copy{font-size:.58rem;color:var(--t2);flex-shrink:0;transition:color .15s}
+.fw-code:hover .fw-copy{color:var(--low)}
+.action-chip{display:inline-flex;align-items:center;gap:4px;background:var(--s3);border:1px solid var(--b1);border-radius:var(--r);padding:4px 9px;font-size:.67rem;color:var(--t1);margin:3px}
+
+/* info rows */
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--b0);font-size:.76rem}
+.info-row:last-child{border-bottom:none}
+.ik{color:var(--t2);font-weight:500}
+.iv{font-family:var(--fm);font-size:.7rem}
+.iv.ok{color:var(--low)}.iv.warn{color:var(--medium)}.iv.err{color:var(--critical)}.iv.info{color:var(--brand-l)}
+
+/* breakdown */
+.bd-item{padding:7px 0;border-bottom:1px solid var(--b0)}
+.bd-item:last-child{border-bottom:none}
+.bd-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.bd-name{font-size:.72rem;font-weight:500;color:var(--t1);text-transform:capitalize}
+.bd-n{font-family:var(--fm);font-size:.67rem;color:var(--t2)}
+.mini-bar{height:3px;background:var(--s4);border-radius:2px;overflow:hidden}
+.mini-fill{height:100%;border-radius:2px;background:var(--brand);opacity:.7;transition:width .6s}
+
+/* live monitor */
+.live-line{font-family:var(--fm);font-size:.66rem;color:var(--t2);padding:3px 0;border-bottom:1px solid rgba(30,45,66,.5);line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+.live-line.threat{color:var(--critical)}
+.live-line.warn{color:var(--medium)}
+.live-tag{flex-shrink:0;font-size:.58rem;padding:1px 5px;border-radius:2px}
+.lt-threat{background:var(--cm);color:var(--critical)}
+.lt-ok{background:var(--lm);color:var(--low)}
+.lt-info{background:var(--bxs);color:var(--brand-l)}
+#liveLog{height:340px;overflow-y:auto;padding:10px 14px;background:var(--s0);border-radius:var(--r)}
+
+/* ip blocked table */
+.ip-row{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--b0);font-size:.74rem;transition:background .12s}
+.ip-row:last-child{border-bottom:none}
+.ip-row:hover{background:var(--s3)}
+.ip-addr{font-family:var(--fm);color:var(--t1)}
+.ip-right{display:flex;align-items:center;gap:9px}
+.ip-time{font-family:var(--fm);font-size:.63rem;color:var(--t2)}
+
+/* form inputs */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:.7rem;font-weight:600;color:var(--t2);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
+.form-input{width:100%;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:9px 12px;font-size:.8rem;color:var(--t0);font-family:var(--fn);transition:border-color .2s;outline:none}
+.form-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(45,126,247,.15)}
+.form-input::placeholder{color:var(--t3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.form-row{grid-template-columns:1fr}}
+.form-hint{font-size:.67rem;color:var(--t2);margin-top:4px}
+
+/* toggle */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b0)}
+.toggle-wrap:last-child{border-bottom:none}
+.toggle-info .tl{font-size:.8rem;font-weight:500;color:var(--t1)}
+.toggle-info .td{font-size:.68rem;color:var(--t2);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--s4);border-radius:11px;cursor:pointer;transition:.3s;border:1px solid var(--b1)}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:2px;top:2px;background:var(--t2);border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--brand);border-color:var(--brand-d)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);background:#fff}
+
+/* channel card */
+.channel-card{border:1px solid var(--b0);border-radius:var(--rl);padding:20px;margin-bottom:16px;background:var(--s1)}
+.channel-hd{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.channel-icon{width:38px;height:38px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.ch-slack{background:rgba(74,21,75,.3)}
+.ch-discord{background:rgba(88,101,242,.2)}
+.ch-email{background:rgba(45,126,247,.15)}
+.channel-name{font-size:.88rem;font-weight:600;color:var(--t0)}
+.channel-desc{font-size:.68rem;color:var(--t2);margin-top:1px}
+.ch-status{margin-left:auto}
+
+/* empty */
+.empty{text-align:center;padding:40px 20px}
+.empty-ic{width:48px;height:48px;background:var(--s3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto 14px;opacity:.7}
+.empty-t{font-size:.84rem;font-weight:600;color:var(--t1);margin-bottom:3px}
+.empty-d{font-size:.72rem;color:var(--t2)}
+
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s4);border:1px solid var(--b2);color:var(--t0);font-size:.76rem;font-weight:500;padding:9px 14px;border-radius:var(--r);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:7px;transform:translateY(70px);opacity:0;transition:all .25s cubic-bezier(.4,0,.2,1)}
+.toast.show{transform:translateY(0);opacity:1}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
+
+@keyframes fd{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.fd{animation:fd .3s ease-out both}
+.fd:nth-child(2){animation-delay:35ms}.fd:nth-child(3){animation-delay:70ms}.fd:nth-child(4){animation-delay:105ms}.fd:nth-child(5){animation-delay:140ms}
+@keyframes rw{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
+.rw{animation:rw .22s ease-out both}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <div><div id="dTitle" style="font-size:.95rem;font-weight:700;color:var(--t0)"></div><div id="dMeta" style="font-size:.72rem;color:var(--t2);margin-top:2px"></div></div>
+    <button class="close-btn" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="dBody"></div>
+</div>
+
+<!-- ── AUTH SCREENS ─────────────────────────────────────────── -->
+<div id="authScreen" style="display:none;position:fixed;inset:0;background:var(--s0);z-index:500;overflow-y:auto">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div style="width:100%;max-width:420px">
+
+      <!-- Logo -->
+      <div style="text-align:center;margin-bottom:36px">
+        <div style="width:56px;height:56px;background:var(--brand);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;box-shadow:0 4px 20px rgba(45,126,247,.4)">🛡</div>
+        <div style="font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--t0)">CyberGuard AI</div>
+        <div style="font-size:.78rem;color:var(--t2);margin-top:4px">Security Operations Center</div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm" style="background:var(--s2);border:1px solid var(--b0);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid var(--b0)">
+          <div style="font-size:.95rem;font-weight:600;color:var(--t0)">Administrator Login</div>
+          <div style="font-size:.72rem;color:var(--t2);margin-top:2px">Sign in to access the dashboard</div>
+        </div>
+        <div style="padding:24px">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" id="loginUser" placeholder="Enter your username" autocomplete="username"
+              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div style="position:relative">
+              <input class="form-input" id="loginPass" type="password" placeholder="Enter your password"
+                autocomplete="current-password" style="padding-right:40px"
+                onkeydown="if(event.key==='Enter')submitLogin()"/>
+              <button onclick="togglePass('loginPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t2);cursor:pointer;font-size:.8rem;padding:2px 4px">👁</button>
+            </div>
+          </div>
+          <div id="loginError" style="display:none;margin-bottom:14px"></div>
+          <button class="btn btn-primary" id="loginBtn" onclick="submitLogin()" style="width:100%;justify-content:center;padding:10px">
+            Sign In
+          </button>
+        </div>
+        <div style="padding:12px 24px;border-top:1px solid var(--b0);background:var(--s1)">
+          <div style="font-size:.68rem;color:var(--t3);text-align:center">
+            Protected by CyberGuard AI · Rate limited · Sessions expire on restart
+          </div>
+        </div>
+      </div>
+
+      <!-- SETUP FORM (first run) -->
+      <div id="setupForm" style="display:none;background:var(--s2);border:1px solid var(--b0);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid var(--b0);background:rgba(48,196,138,.06)">
+          <div style="font-size:.95rem;font-weight:600;color:var(--t0)">First-Time Setup</div>
+          <div style="font-size:.72rem;color:var(--low);margin-top:2px">Create your administrator account to continue</div>
+        </div>
+        <div style="padding:24px">
+          <div style="background:rgba(45,126,247,.08);border:1px solid rgba(45,126,247,.2);border-radius:var(--r);padding:10px 13px;margin-bottom:18px;font-size:.72rem;color:#7ab8ff">
+            ℹ No admin account exists yet. Set your credentials — they are stored as a secure hash and never saved in plain text.
+          </div>
+          <div class="form-group">
+            <label class="form-label">Choose Username</label>
+            <input class="form-input" id="setupUser" placeholder="e.g. admin" autocomplete="username"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Choose Password</label>
+            <div style="position:relative">
+              <input class="form-input" id="setupPass" type="password" placeholder="Minimum 8 characters"
+                autocomplete="new-password" style="padding-right:40px"
+                oninput="checkPassStrength(this.value)"/>
+              <button onclick="togglePass('setupPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t2);cursor:pointer;font-size:.8rem;padding:2px 4px">👁</button>
+            </div>
+            <div id="passStrength" style="margin-top:6px;height:3px;border-radius:2px;background:var(--b0);overflow:hidden"><div id="passStrengthBar" style="height:100%;width:0%;border-radius:2px;transition:all .3s"></div></div>
+            <div id="passStrengthLabel" style="font-size:.63rem;color:var(--t2);margin-top:3px"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <input class="form-input" id="setupPassConfirm" type="password" placeholder="Repeat password"
+              autocomplete="new-password" onkeydown="if(event.key==='Enter')submitSetup()"/>
+          </div>
+          <div id="setupError" style="display:none;margin-bottom:14px"></div>
+          <button class="btn btn-primary" id="setupBtn" onclick="submitSetup()" style="width:100%;justify-content:center;padding:10px">
+            Create Account &amp; Enter Dashboard
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark">🛡</div>
+    <div><div class="sb-name">CyberGuard AI</div><div class="sb-sub">IPS + IDS Platform</div></div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Overview</div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-ic">📊</span>Dashboard</div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Detection</div>
+    <div class="nav-item" data-page="log-analysis"><span class="nav-ic">🔍</span>Log Analysis</div>
+    <div class="nav-item" data-page="threat-feed"><span class="nav-ic">⚠️</span>Threat Feed<span class="nav-badge" id="navBadge">0</span></div>
+    <div class="nav-item" data-page="blocked-ips"><span class="nav-ic">🚫</span>Blocked IPs<span class="nav-badge" id="navBlocked" style="background:var(--high)">0</span></div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Configuration</div>
+    <div class="nav-item" data-page="alert-channels"><span class="nav-ic">🔔</span>Alert Channels</div>
+    <div class="nav-item" data-page="configuration"><span class="nav-ic">⚙️</span>Configuration</div>
+  </div>
+  <div class="sb-foot">
+    <div style="display:flex;align-items:center;gap:7px;font-size:.7rem;color:var(--t2)">
+      <span class="dot on" id="sbDot"></span><span id="sbStatus">System Online</span>
+    </div>
+    <div id="sbPlatform" style="font-size:.6rem;color:var(--t3);margin-top:5px;font-family:var(--fm);line-height:1.5"></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="bc">CyberGuard AI <span style="color:var(--b2);margin:0 4px">›</span><span id="bcPage">Dashboard</span></div>
+    <div class="tb-right">
+      <div class="ips-badge" id="ipsBadge">IPS ACTIVE</div>
+      <div class="tb-pill"><span class="dot on" id="groqDot"></span><span id="groqLabel">Loading…</span></div>
+      <div class="tb-clock" id="clock"></div>
+      <div class="tb-pill" style="gap:8px">
+        <span style="font-size:.62rem;color:var(--t2)">👤</span>
+        <span id="tbUsername" style="font-size:.7rem;color:var(--t1)">—</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" style="padding:5px 10px;font-size:.68rem">Sign out</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="ph">
+        <div><div class="ph-t">Security Dashboard</div><div class="ph-d">AI-powered IPS+IDS — real-time threat detection and autonomous response</div></div>
+        <div class="ph-actions">
+          <button class="btn btn-ghost btn-sm" onclick="nav('log-analysis')">⚡ Analyze Log</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadReport('json')">↓ JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadReport('html')">↓ HTML</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadReport('pdf')">↓ PDF</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat sr fd"><div class="stat-top"><div class="stat-ic ic-r">🔴</div></div><div class="stat-val" id="sThreats">0</div><div class="stat-lbl">Total Threats</div></div>
+        <div class="stat sb fd"><div class="stat-top"><div class="stat-ic ic-b">🤖</div></div><div class="stat-val" id="sDecisions">0</div><div class="stat-lbl">AI Decisions</div></div>
+        <div class="stat so fd"><div class="stat-top"><div class="stat-ic ic-o">🚫</div></div><div class="stat-val" id="sBlocked">0</div><div class="stat-lbl">IPs Blocked</div></div>
+        <div class="stat sy fd"><div class="stat-top"><div class="stat-ic ic-y">🌊</div></div><div class="stat-val" id="sDdos">0</div><div class="stat-lbl">DDoS/DoS</div></div>
+        <div class="stat sg fd"><div class="stat-top"><div class="stat-ic ic-g">📣</div></div><div class="stat-val" id="sAlerts">0</div><div class="stat-lbl">Alerts Sent</div></div>
+      </div>
+      <div class="two-col">
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Recent Threats</div><div class="card-sub" id="dashFeedSub">Latest detections</div></div><div class="card-acts"><button class="btn btn-ghost btn-xs" onclick="nav('threat-feed')">View all →</button></div></div>
+            <div id="dashFeed"><div class="empty" style="padding:30px"><div class="empty-ic">🛡</div><div class="empty-t">No threats yet</div><div class="empty-d">Upload a log or start live monitoring</div></div></div>
+          </div>
+        </div>
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div class="card-title">System Status</div></div>
+            <div id="sysStatus">
+              <div class="info-row"><span class="ik">Platform</span><span class="iv info" id="cfgPlat">—</span></div>
+              <div class="info-row"><span class="ik">Architecture</span><span class="iv" id="cfgArch">—</span></div>
+              <div class="info-row"><span class="ik">Python</span><span class="iv" id="cfgPy">—</span></div>
+              <div class="info-row"><span class="ik">Groq AI</span><span class="iv" id="cfgGroq">—</span></div>
+              <div class="info-row"><span class="ik">IPS Mode</span><span class="iv" id="cfgIps">—</span></div>
+              <div class="info-row"><span class="ik">Slack</span><span class="iv" id="cfgSlack">—</span></div>
+              <div class="info-row"><span class="ik">Discord</span><span class="iv" id="cfgDiscord">—</span></div>
+              <div class="info-row"><span class="ik">Email</span><span class="iv" id="cfgEmail">—</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Attack Categories</div></div>
+            <div class="card-body" id="dashBreakdown"><div style="font-size:.72rem;color:var(--t2);text-align:center;padding:12px 0">No data</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ LOG ANALYSIS ══ -->
+    <div class="page" id="page-log-analysis">
+      <div class="ph">
+        <div><div class="ph-t">Log Analysis</div><div class="ph-d">Upload or monitor logs — AI classifies every threat in real time</div></div>
+      </div>
+      <div class="two-col">
+        <div class="col-stack">
+          <!-- Upload -->
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Upload Log File</div><div class="card-sub">Apache, Nginx, IIS, Syslog — any common format</div></div></div>
+            <div class="card-body">
+              <div class="upload-zone" id="uploadZone" onclick="document.getElementById('logFile').click()">
+                <input type="file" id="logFile" accept=".log,.txt,.csv" onchange="onFile(event)"/>
+                <div class="uz-ic">📄</div>
+                <div class="uz-title">Drop log file here or click to upload</div>
+                <div class="uz-hint">Supports Apache · Nginx · IIS W3C · Syslog · Custom</div>
+                <div id="fileDisplay"></div>
+              </div>
+              <div style="display:flex;gap:9px;margin-top:14px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeLog()" disabled>⚡ Analyze Now</button>
+                <div style="font-size:.7rem;color:var(--t2)">Demo: <code style="font-family:var(--fm);color:var(--brand-l);background:var(--bxs);padding:2px 6px;border-radius:3px;font-size:.65rem">sample_logs/apache_access.log</code></div>
+              </div>
+              <div id="uploadBanner"></div>
+            </div>
+          </div>
+
+          <!-- Live monitor -->
+          <div class="card">
+            <div class="card-hd">
+              <div><div class="card-title">Live Log Monitor</div><div class="card-sub">Tail a production log file — threats detected as they appear</div></div>
+              <div class="card-acts">
+                <span id="monitorStatus" class="badge info" style="display:none">● LIVE</span>
+                <button class="btn btn-success btn-sm" id="monStartBtn" onclick="startMonitor()">▶ Start</button>
+                <button class="btn btn-danger btn-sm" id="monStopBtn" onclick="stopMonitor()" disabled>■ Stop</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
+                <input class="form-input" id="monPath" placeholder="/var/log/apache2/access.log" style="flex:1"/>
+                <button class="btn btn-ghost btn-sm" onclick="detectLogPath()">Auto-detect</button>
+              </div>
+              <div id="liveLog"><div style="font-family:var(--fm);font-size:.66rem;color:var(--t3);text-align:center;padding:20px">Waiting for live data…</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Threat Signatures</div></div>
+            <div class="card-body" style="font-size:.74rem;color:var(--t1);line-height:1.8">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 14px">
+                <div>✓ SQL Injection (10 patterns)</div><div>✓ Remote Code Execution</div>
+                <div>✓ Cross-Site Scripting (XSS)</div><div>✓ Log4Shell / CVEs</div>
+                <div>✓ Path / Directory Traversal</div><div>✓ Shellshock</div>
+                <div>✓ Local / Remote File Inclusion</div><div>✓ SSRF</div>
+                <div>✓ XXE Injection</div><div>✓ Web Shell Detection</div>
+                <div>✓ Brute Force / Cred Stuffing</div><div>✓ DDoS / DoS Flood</div>
+                <div>✓ Reconnaissance / Scanning</div><div>✓ Malware Delivery</div>
+                <div>✓ Malicious User Agents</div><div>✓ Protocol Abuse</div>
+              </div>
+              <div style="margin-top:14px;padding:10px 12px;background:var(--s0);border-radius:var(--r);font-size:.68rem;color:var(--t2)">
+                MITRE ATT&amp;CK mapped · CVE referenced · Kill chain phase classified
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Analysis Results</div></div>
+            <div class="card-body" id="analysisSummary">
+              <div style="font-size:.72rem;color:var(--t2);text-align:center;padding:12px 0">Run an analysis to see results</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ THREAT FEED ══ -->
+    <div class="page" id="page-threat-feed">
+      <div class="ph">
+        <div><div class="ph-t">Threat Intelligence Feed</div><div class="ph-d">All detected threats — click any row for full AI analysis</div></div>
+        <div class="ph-actions">
+          <select id="filterSev" class="form-input btn-sm" style="width:auto;padding:5px 10px" onchange="renderFeed()">
+            <option value="">All Severities</option>
+            <option value="critical">Critical (8-10)</option>
+            <option value="high">High (6-7)</option>
+            <option value="medium">Medium (4-5)</option>
+            <option value="low">Low (1-3)</option>
+          </select>
+          <select id="filterType" class="form-input btn-sm" style="width:auto;padding:5px 10px" onchange="renderFeed()">
+            <option value="">All Types</option>
+            <option value="ddos">DDoS/DoS</option>
+            <option value="sql_injection">SQL Injection</option>
+            <option value="rce">RCE</option>
+            <option value="xss">XSS</option>
+            <option value="brute_force">Brute Force</option>
+            <option value="reconnaissance">Reconnaissance</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="clearDB()">Clear DB</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title">Threat Feed</div><div class="card-sub" id="feedSub">Loading…</div></div><div class="card-acts" id="feedBadge"></div></div>
+        <div id="feedTableWrap">
+          <div class="empty"><div class="empty-ic">🛡</div><div class="empty-t">No threats recorded</div><div class="empty-d">Upload a log file or start live monitoring</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ BLOCKED IPS ══ -->
+    <div class="page" id="page-blocked-ips">
+      <div class="ph">
+        <div><div class="ph-t">Blocked IP Addresses</div><div class="ph-d">IPS active block list — real-time enforcement on all incoming requests</div></div>
+        <div class="ph-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadBlocked()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Active Block List</div><div class="card-sub" id="blockedSub">IPS enforced</div></div></div>
+            <div id="blockedList"><div class="empty"><div class="empty-ic">🚫</div><div class="empty-t">No IPs currently blocked</div><div class="empty-d">IPS will auto-block IPs with severity ≥ threshold</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Blocked from Threat DB</div></div>
+            <div id="dbBlockedList"><div class="empty" style="padding:24px"><div class="empty-d">No historical blocks</div></div></div>
+          </div>
+        </div>
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Manual Block IP</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">IP Address</label>
+                <input class="form-input" id="manualIP" placeholder="x.x.x.x"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Reason</label>
+                <input class="form-input" id="manualReason" placeholder="Manual block — suspicious activity"/>
+              </div>
+              <button class="btn btn-danger" onclick="manualBlock()">🚫 Block IP</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Remediation Commands</div></div>
+            <div class="card-body" id="fwPanel">
+              <div style="font-size:.72rem;color:var(--t2)">Select a blocked IP above to see platform-specific commands</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ ALERT CHANNELS ══ -->
+    <div class="page" id="page-alert-channels">
+      <div class="ph"><div><div class="ph-t">Alert Channels</div><div class="ph-d">Configure Slack, Discord and Email notifications for detected threats</div></div></div>
+
+      <!-- Slack -->
+      <div class="channel-card">
+        <div class="channel-hd">
+          <div class="channel-icon ch-slack">💬</div>
+          <div><div class="channel-name">Slack</div><div class="channel-desc">Webhook-based alerts to any Slack channel</div></div>
+          <div class="ch-status" id="slackStatus"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Webhook URL</label>
+          <input class="form-input" id="slackUrl" placeholder="https://hooks.slack.com/services/T.../B.../..."/>
+          <div class="form-hint">Create at api.slack.com → Your App → Incoming Webhooks</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveChannel('slack')">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="testChannel('slack')">Send Test Alert</button>
+        </div>
+      </div>
+
+      <!-- Discord -->
+      <div class="channel-card">
+        <div class="channel-hd">
+          <div class="channel-icon ch-discord">🎮</div>
+          <div><div class="channel-name">Discord</div><div class="channel-desc">Post threat alerts to a Discord channel via webhook</div></div>
+          <div class="ch-status" id="discordStatus"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Webhook URL</label>
+          <input class="form-input" id="discordUrl" placeholder="https://discord.com/api/webhooks/..."/>
+          <div class="form-hint">Server Settings → Integrations → Webhooks → New Webhook</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveChannel('discord')">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="testChannel('discord')">Send Test Alert</button>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="channel-card">
+        <div class="channel-hd">
+          <div class="channel-icon ch-email">📧</div>
+          <div><div class="channel-name">Email (SMTP)</div><div class="channel-desc">Send alerts via SMTP — Gmail, Outlook, any email provider</div></div>
+          <div class="ch-status" id="emailStatus"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">SMTP Host</label><input class="form-input" id="emailHost" placeholder="smtp.gmail.com"/></div>
+          <div class="form-group"><label class="form-label">Port</label><input class="form-input" id="emailPort" placeholder="587" type="number"/></div>
+          <div class="form-group"><label class="form-label">Username / From Email</label><input class="form-input" id="emailUser" placeholder="you@gmail.com"/></div>
+          <div class="form-group"><label class="form-label">App Password</label><input class="form-input" id="emailPass" type="password" placeholder="••••••••"/></div>
+          <div class="form-group"><label class="form-label">Alert Recipient (To)</label><input class="form-input" id="emailTo" placeholder="security@company.com"/></div>
+          <div class="form-group"><label class="form-label">From Name / Address</label><input class="form-input" id="emailFrom" placeholder="cyberguard@company.com"/></div>
+        </div>
+        <div class="form-hint" style="margin-bottom:12px">For Gmail: enable 2FA and use an App Password (not your regular password)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveChannel('email')">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="testChannel('email')">Send Test Email</button>
+        </div>
+      </div>
+      <div id="channelBanner"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ CONFIGURATION ══ -->
+    <div class="page" id="page-configuration">
+      <div class="ph"><div><div class="ph-t">Configuration</div><div class="ph-d">System settings, AI engine, IPS/IDS tuning, and live monitoring path</div></div></div>
+
+      <div class="two-col">
+        <div class="col-stack">
+          <!-- AI Engine -->
+          <div class="card">
+            <div class="card-hd"><div class="card-title">AI Engine — Groq</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Groq API Key</label>
+                <input class="form-input" id="cfgGroqKey" type="password" placeholder="gsk_…"/>
+                <div class="form-hint">Free key at console.groq.com · Without key: heuristic mode</div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="saveGroqBtn" onclick="saveCfgField('groq_api_key','cfgGroqKey','saveGroqBtn')">Save Key</button>
+            </div>
+          </div>
+
+          <!-- IPS/IDS Tuning -->
+          <div class="card">
+            <div class="card-hd"><div class="card-title">IPS / IDS Tuning</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Auto-Block Severity Threshold (1–10)</label>
+                <input class="form-input" id="cfgThreshold" type="number" min="1" max="10" placeholder="7"/>
+                <div class="form-hint">IPs with severity ≥ this value will be automatically blocked</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">DDoS Detection — Requests per Window</label>
+                <input class="form-input" id="cfgDdosRps" type="number" placeholder="50"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">DDoS Window (seconds)</label>
+                <input class="form-input" id="cfgDdosWin" type="number" placeholder="10"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Events Analyzed per Upload</label>
+                <input class="form-input" id="cfgMaxEvents" type="number" placeholder="50"/>
+              </div>
+
+              <div style="border:1px solid var(--b0);border-radius:var(--r);overflow:hidden;margin-bottom:14px">
+                <div class="toggle-wrap" style="padding:12px 14px">
+                  <div class="toggle-info"><div class="tl">IPS Mode — Active Blocking</div><div class="td">Block requests from flagged IPs in real time</div></div>
+                  <label class="toggle"><input type="checkbox" id="cfgIpsMode" onchange="saveToggle('ips_mode','cfgIpsMode')"><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="saveCfgTuning()">Save Settings</button>
+            </div>
+          </div>
+
+          <!-- Live Monitor Path -->
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Live Monitor Path</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Default Log File Path</label>
+                <input class="form-input" id="cfgMonPath" placeholder="/var/log/apache2/access.log"/>
+                <div class="form-hint">
+                  Linux: /var/log/apache2/access.log or /var/log/nginx/access.log<br>
+                  macOS: /var/log/apache2/access_log<br>
+                  Windows: C:\inetpub\logs\LogFiles\W3SVC1\u_ex*.log
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="saveMonBtn" onclick="saveCfgField('monitor_log_path','cfgMonPath','saveMonBtn')">Save Path</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Platform Information</div></div>
+            <div id="platformInfo">
+              <div class="info-row"><span class="ik">OS</span><span class="iv info" id="piOs">—</span></div>
+              <div class="info-row"><span class="ik">Kernel</span><span class="iv" id="piKernel">—</span></div>
+              <div class="info-row"><span class="ik">Architecture</span><span class="iv" id="piArch">—</span></div>
+              <div class="info-row"><span class="ik">Processor</span><span class="iv" id="piProc">—</span></div>
+              <div class="info-row"><span class="ik">Hostname</span><span class="iv" id="piHost">—</span></div>
+              <div class="info-row"><span class="ik">Python</span><span class="iv" id="piPy">—</span></div>
+              <div class="info-row"><span class="ik">Python Impl</span><span class="iv" id="piPyImpl">—</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Change Password</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input class="form-input" id="cpCurrent" type="password" placeholder="••••••••"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input class="form-input" id="cpNew" type="password" placeholder="Minimum 8 characters"
+                  oninput="checkPassStrength(this.value,'cpBar','cpLabel')"/>
+                <div style="margin-top:5px;height:3px;border-radius:2px;background:var(--b0);overflow:hidden">
+                  <div id="cpBar" style="height:100%;width:0%;border-radius:2px;transition:all .3s"></div>
+                </div>
+                <div id="cpLabel" style="font-size:.62rem;color:var(--t2);margin-top:2px"></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input class="form-input" id="cpConfirm" type="password" placeholder="Repeat new password"/>
+              </div>
+              <button class="btn btn-primary btn-sm" id="cpBtn" onclick="changePassword()">Update Password</button>
+              <div id="cpBanner" style="margin-top:10px"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Reports</div></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:9px">
+              <button class="btn btn-ghost" onclick="downloadReport('json')" style="justify-content:flex-start">↓ Download JSON Report</button>
+              <button class="btn btn-ghost" onclick="downloadReport('html')" style="justify-content:flex-start">↓ Download HTML Report</button>
+              <button class="btn btn-ghost" onclick="downloadReport('pdf')" style="justify-content:flex-start">↓ Download PDF Report</button>
+              <div style="border-top:1px solid var(--b0);padding-top:9px;margin-top:3px">
+                <button class="btn btn-danger btn-sm" onclick="clearDB()">🗑 Clear All Threat Data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="cfgBanner"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const API = location.origin + '/api';
+let threats = [], prevStats = {}, cfgCache = {}, currentFile = null, monitorActive = false, evtSource = null;
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const labels = {
+    'dashboard':'Dashboard','log-analysis':'Log Analysis',
+    'threat-feed':'Threat Feed','blocked-ips':'Blocked IPs',
+    'alert-channels':'Alert Channels','configuration':'Configuration'
+  };
+  document.getElementById('bcPage').textContent = labels[page] || page;
+
+  if (page === 'threat-feed') renderFeed();
+  if (page === 'blocked-ips') loadBlocked();
+  if (page === 'alert-channels') loadChannelConfig();
+  if (page === 'configuration') loadCfg();
+}
+document.querySelectorAll('.nav-item').forEach(el =>
+  el.addEventListener('click', () => nav(el.dataset.page))
+);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+// ── Clock ─────────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleString('en-GB',
+    {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}, 1000);
+
+// ── Health ────────────────────────────────────────────────────────────────────
+async function loadHealth() {
+  try {
+    const h = await get('/health');
+    const pi = h.platform || {};
+    // Sidebar
+    document.getElementById('sbPlatform').innerHTML =
+      (pi.display || '').replace(' (','\n(') + '\n' + (pi.hostname || '');
+    // Topbar
+    const ok = h.groq_api === 'configured';
+    document.getElementById('groqDot').className = 'dot ' + (ok ? 'on' : 'warn');
+    document.getElementById('groqLabel').textContent = ok ? 'Groq AI' : 'Heuristic';
+    document.getElementById('groqLabel').style.color = ok ? 'var(--low)' : 'var(--medium)';
+    const ipsOn = h.ips_mode !== false;
+    const ipsEl = document.getElementById('ipsBadge');
+    ipsEl.textContent = ipsOn ? 'IPS ACTIVE' : 'IDS ONLY';
+    ipsEl.style.background = ipsOn ? 'rgba(48,196,138,.15)' : 'rgba(232,176,48,.1)';
+    ipsEl.style.color = ipsOn ? 'var(--low)' : 'var(--medium)';
+    // Dashboard status
+    setIv('cfgPlat',  pi.os_detail || pi.display, 'info');
+    setIv('cfgArch',  `${pi.machine} · ${pi.architecture}`);
+    setIv('cfgPy',    pi.python_version || h.python_version);
+    setIv('cfgGroq',  h.groq_api, h.groq_api === 'configured' ? 'ok' : 'warn');
+    setIv('cfgIps',   ipsOn ? 'Active — blocking enabled' : 'Detection only', ipsOn ? 'ok' : 'warn');
+    setIv('cfgSlack', h.slack_webhook, h.slack_webhook === 'configured' ? 'ok' : 'err');
+    setIv('cfgDiscord', h.discord_webhook, h.discord_webhook === 'configured' ? 'ok' : 'err');
+    setIv('cfgEmail', h.email, h.email === 'configured' ? 'ok' : 'err');
+    // Config page platform info
+    setTxt('piOs',     pi.os_detail || pi.display);
+    setTxt('piKernel', pi.kernel || '—');
+    setTxt('piArch',   pi.architecture || '—');
+    setTxt('piProc',   pi.processor || pi.machine || '—');
+    setTxt('piHost',   pi.hostname || '—');
+    setTxt('piPy',     pi.python_version || '—');
+    setTxt('piPyImpl', pi.python_impl || '—');
+    // Nav blocked badge
+    document.getElementById('navBlocked').textContent = h.blocked_count || 0;
+  } catch(e) {
+    document.getElementById('sbDot').className = 'dot off';
+    document.getElementById('sbStatus').textContent = 'Backend offline';
+  }
+}
+function setIv(id, val, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val || '—';
+  if (cls) el.className = 'iv ' + cls;
+}
+function setTxt(id, val) { const e = document.getElementById(id); if(e) e.textContent = val || '—'; }
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await get('/stats');
+    animN('sThreats',   s.total_threats,   prevStats.total_threats);
+    animN('sDecisions', s.total_decisions, prevStats.total_decisions);
+    animN('sBlocked',   s.blocked_ips,     prevStats.blocked_ips);
+    animN('sDdos',      s.ddos_detected,   prevStats.ddos_detected);
+    animN('sAlerts',    s.alerts_sent,     prevStats.alerts_sent);
+    document.getElementById('navBadge').textContent = s.total_threats || 0;
+    const hc = s.critical || 0;
+    document.getElementById('feedBadge').innerHTML = hc > 0
+      ? `<span class="badge critical"><span class="bdot" style="background:var(--critical)"></span>${hc} Critical</span>` : '';
+    prevStats = s;
+  } catch(e) {}
+}
+function animN(id, nv, ov) {
+  const el = document.getElementById(id); if(!el) return;
+  if (String(nv) !== String(ov)) { el.style.opacity='.4'; setTimeout(()=>{el.textContent=nv||0;el.style.opacity='1';el.style.transition='opacity .3s';},80); }
+}
+
+// ── Load threats ──────────────────────────────────────────────────────────────
+async function loadThreats() {
+  try {
+    threats = await get('/threats');
+    renderFeed();
+    renderDashFeed();
+    renderBreakdown();
+  } catch(e) {}
+}
+
+function sevInfo(s) {
+  if (s >= 8) return {cls:'critical',label:'Critical',color:'var(--critical)'};
+  if (s >= 6) return {cls:'high',    label:'High',    color:'var(--high)'};
+  if (s >= 4) return {cls:'medium',  label:'Medium',  color:'var(--medium)'};
+  return             {cls:'low',     label:'Low',     color:'var(--low)'};
+}
+
+function renderFeed() {
+  const wrap = document.getElementById('feedTableWrap');
+  const sub  = document.getElementById('feedSub');
+  const fSev  = document.getElementById('filterSev')?.value || '';
+  const fType = document.getElementById('filterType')?.value || '';
+
+  let data = [...threats];
+  if (fSev === 'critical') data = data.filter(t => t.severity >= 8);
+  else if (fSev === 'high') data = data.filter(t => t.severity >= 6 && t.severity < 8);
+  else if (fSev === 'medium') data = data.filter(t => t.severity >= 4 && t.severity < 6);
+  else if (fSev === 'low') data = data.filter(t => t.severity < 4);
+  if (fType) data = data.filter(t => (t.threat_type||'').includes(fType));
+
+  sub.textContent = `${data.length} event${data.length!==1?'s':''} · Click any row for details`;
+
+  if (!data.length) {
+    wrap.innerHTML = `<div class="empty"><div class="empty-ic">🛡</div><div class="empty-t">No threats found</div><div class="empty-d">Try adjusting filters or run an analysis</div></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Severity</th><th>Threat Type</th><th>Source IP</th><th>Confidence</th><th>MITRE</th><th>IPS Action</th><th>Source</th><th>Time</th></tr></thead>
+    <tbody id="feedTbody"></tbody></table></div>`;
+  const tb = document.getElementById('feedTbody');
+  data.forEach((t, i) => {
+    const si = sevInfo(t.severity);
+    const type = (t.threat_type||'unknown').replace(/_/g,' ');
+    const ts = new Date(t.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const isBlocked = t.blocked || (t.firewall_command && t.firewall_command !== '' && t.firewall_command !== '{}');
+    const action = isBlocked
+      ? `<span class="badge critical">🛡 IPS Blocked</span>`
+      : t.alert_sent ? `<span class="badge medium">⚠ Alert</span>` : `<span class="badge low">👁 Watch</span>`;
+    const isDdos = t.threat_type === 'ddos' || t.threat_type === 'dos';
+    const tr = document.createElement('tr');
+    if (isDdos) tr.classList.add('ddos-row');
+    tr.className += ' rw'; tr.style.animationDelay = `${i*20}ms`;
+    tr.innerHTML = `
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${si.cls}"><span class="bdot" style="background:${si.color}"></span>${si.label}</span>
+        <span style="font-family:var(--fm);font-size:.67rem;color:var(--t2)">${t.severity}/10</span>
+      </div></td>
+      <td style="font-weight:600;color:var(--t0);text-transform:capitalize">${type}${isDdos?'<span style="font-size:.6rem;background:var(--cm);color:var(--critical);padding:1px 5px;border-radius:2px;margin-left:5px">FLOOD</span>':''}</td>
+      <td><span style="font-family:var(--fm);font-size:.7rem">${t.ip_address}</span></td>
+      <td><div class="cf-bar"><div class="cf-track"><div class="cf-fill" style="width:${t.confidence}%;background:${si.color}"></div></div><span style="color:var(--t2)">${t.confidence}%</span></div></td>
+      <td style="font-size:.68rem;color:var(--t2)">${t.mitre_tactic||'—'}</td>
+      <td>${action}</td>
+      <td><span class="badge info">${t.log_source||'upload'}</span></td>
+      <td style="color:var(--t2);font-size:.7rem">${ts}</td>`;
+    tr.onclick = () => openDrawer(t);
+    tb.appendChild(tr);
+  });
+}
+
+function renderDashFeed() {
+  const el = document.getElementById('dashFeed');
+  const sub = document.getElementById('dashFeedSub');
+  const recent = threats.slice(0, 8);
+  sub.textContent = `${threats.length} total · ${recent.length} shown`;
+  if (!recent.length) {
+    el.innerHTML = `<div class="empty" style="padding:24px"><div class="empty-ic">🛡</div><div class="empty-t">No threats yet</div><div class="empty-d">Upload a log or start live monitoring</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Severity</th><th>Type</th><th>IP</th><th>Action</th><th>Time</th></tr></thead>
+    <tbody>${recent.map(t => {
+      const si = sevInfo(t.severity);
+      const type = (t.threat_type||'').replace(/_/g,' ');
+      const ts = new Date(t.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const act = t.blocked ? `<span class="badge critical">Blocked</span>` : t.alert_sent ? `<span class="badge medium">Alert</span>` : `<span class="badge low">Watch</span>`;
+      return `<tr onclick="nav('threat-feed')" style="cursor:pointer">
+        <td><span class="badge ${si.cls}">${si.label}</span></td>
+        <td style="text-transform:capitalize;font-size:.72rem">${type}</td>
+        <td style="font-family:var(--fm);font-size:.69rem">${t.ip_address}</td>
+        <td>${act}</td>
+        <td style="color:var(--t2);font-size:.68rem">${ts}</td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function renderBreakdown() {
+  const el = document.getElementById('dashBreakdown');
+  const typeMap = {};
+  threats.forEach(t => { const k=(t.threat_type||'unknown').replace(/_/g,' '); typeMap[k]=(typeMap[k]||0)+1; });
+  const total = threats.length || 1;
+  const sorted = Object.entries(typeMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  el.innerHTML = sorted.length ? sorted.map(([n,c]) => `
+    <div class="bd-item">
+      <div class="bd-row"><span class="bd-name">${n}</span><span class="bd-n">${c}</span></div>
+      <div class="mini-bar"><div class="mini-fill" style="width:${(c/total*100).toFixed(0)}%"></div></div>
+    </div>`).join('') : '<div style="font-size:.72rem;color:var(--t2);text-align:center;padding:10px 0">No data</div>';
+}
+
+// ── Drawer ─────────────────────────────────────────────────────────────────────
+function openDrawer(t) {
+  const si = sevInfo(t.severity);
+  const type = (t.threat_type||'unknown').replace(/_/g,' ');
+  document.getElementById('dTitle').innerHTML =
+    `<span class="badge ${si.cls}" style="margin-right:8px"><span class="bdot" style="background:${si.color}"></span>${si.label}</span>${cap(type)} Attack`;
+  document.getElementById('dMeta').textContent = `${t.ip_address}  ·  ${new Date(t.timestamp).toLocaleString()}`;
+
+  let fwHtml = '';
+  if (t.firewall_command && t.firewall_command !== '' && t.firewall_command !== '{}') {
+    try {
+      const cmds = JSON.parse(t.firewall_command);
+      const plats = [
+        ['Linux (UFW)',        cmds.linux_ufw],
+        ['Linux (iptables)',   cmds.linux_iptables],
+        ['Linux (nftables)',   cmds.linux_nftables],
+        ['macOS (pf)',         cmds.macos_pf],
+        ['Windows Firewall',   cmds.windows_firewall],
+        ['Windows PowerShell', cmds.windows_powershell],
+        ['Nginx',              cmds.nginx_block],
+        ['Apache',             cmds.apache_block],
+        ['Cisco ACL',          cmds.cisco_acl],
+      ].filter(([,v])=>v);
+      fwHtml = `<div class="d-sec"><div class="d-sec-t">Remediation — Firewall Commands (click to copy)</div>
+        ${plats.map(([lbl,cmd])=>`<div class="fw-row"><div class="fw-lbl">${lbl}</div>
+          <div class="fw-code" onclick="copyCmd('${cmd.replace(/'/g,"\\'")}',this)">
+            <span class="fw-code-txt">${esc(cmd)}</span><span class="fw-copy">copy</span>
+          </div></div>`).join('')}</div>`;
+    } catch(e) {}
+  }
+
+  const actions = (t.actions_taken||[]).map(a=>`<span class="action-chip">✓ ${esc(a)}</span>`).join('');
+
+  document.getElementById('dBody').innerHTML = `
+    <div class="d-sec"><div class="d-sec-t">Incident Details</div>
+      <div class="d-kv">
+        <div class="d-k">Source IP</div><div class="d-v" style="font-family:var(--fm)">${t.ip_address}</div>
+        <div class="d-k">Threat Type</div><div class="d-v" style="text-transform:capitalize">${type}</div>
+        <div class="d-k">Severity</div><div class="d-v"><span class="badge ${si.cls}">${si.label} ${t.severity}/10</span></div>
+        <div class="d-k">Confidence</div><div class="d-v">
+          <div class="cf-bar"><div class="cf-track" style="min-width:80px"><div class="cf-fill" style="width:${t.confidence}%;background:${si.color}"></div></div>${t.confidence}%</div>
+        </div>
+        <div class="d-k">MITRE Tactic</div><div class="d-v">${t.mitre_tactic||'—'}</div>
+        <div class="d-k">CVE</div><div class="d-v" style="font-family:var(--fm)">${t.cve_reference||'—'}</div>
+        <div class="d-k">Log Source</div><div class="d-v">${t.log_source||'upload'}</div>
+        <div class="d-k">IPS Blocked</div><div class="d-v">${t.blocked?'<span class="badge critical">Yes</span>':'<span class="badge low">No</span>'}</div>
+      </div>
+    </div>
+    <div class="d-sec"><div class="d-sec-t">AI Analysis</div>
+      <p style="font-size:.78rem;color:var(--t1);line-height:1.7">${esc(t.reasoning||'—')}</p>
+    </div>
+    <div class="d-sec"><div class="d-sec-t">Attack Vector</div>
+      <p style="font-size:.76rem;color:var(--t1);line-height:1.6">${esc(t.attack_vector||'—')}</p>
+    </div>
+    <div class="d-sec"><div class="d-sec-t">Potential Impact</div>
+      <p style="font-size:.76rem;color:var(--t1);line-height:1.6">${esc(t.potential_impact||'—')}</p>
+    </div>
+    <div class="d-sec"><div class="d-sec-t">Raw Log Entry</div>
+      <div class="code-block">${esc(t.raw_log||'—')}</div>
+    </div>
+    ${fwHtml}
+    <div class="d-sec"><div class="d-sec-t">Actions Taken</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${actions||'<span style="color:var(--t2);font-size:.72rem">None recorded</span>'}</div>
+    </div>`;
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────────────
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('drag')});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)setFile(f)});
+function onFile(e){const f=e.target.files[0];if(f)setFile(f)}
+function setFile(f){
+  currentFile=f;
+  document.getElementById('fileDisplay').innerHTML=`<div class="uz-file">📄 ${f.name} <span style="color:var(--t2)">${(f.size/1024).toFixed(1)} KB</span></div>`;
+  document.getElementById('analyzeBtn').disabled=false;
+}
+async function analyzeLog(){
+  if(!currentFile)return;
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; btn.textContent='Analyzing…';
+  showBanner('uploadBanner','info','AI is analyzing threats — classifying against all IDS signatures…',true);
+  const fd=new FormData(); fd.append('file',currentFile);
+  try{
+    const d=await post_form('/analyze-log',fd);
+    if(d.error) throw new Error(d.error);
+    const crit = (d.decisions||[]).filter(x=>x.severity>=8).length;
+    const blk  = (d.decisions||[]).filter(x=>x.blocked).length;
+    showBanner('uploadBanner','success',`Analysis complete — ${d.total_events} suspicious events · ${d.analyzed} analyzed · ${crit} critical · ${blk} IPS blocked`);
+    // Update summary
+    const sumEl = document.getElementById('analysisSummary');
+    if(sumEl){
+      const types = {};
+      (d.decisions||[]).forEach(x=>{ const k=(x.threat_type||'').replace(/_/g,' '); types[k]=(types[k]||0)+1; });
+      sumEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--s0);border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:700;color:var(--t0)">${d.total_events}</div><div style="font-size:.65rem;color:var(--t2)">Suspicious Events</div></div>
+        <div style="background:var(--s0);border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:700;color:var(--critical)">${blk}</div><div style="font-size:.65rem;color:var(--t2)">IPS Blocked</div></div>
+      </div>
+      ${Object.entries(types).map(([n,c])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--b0);font-size:.72rem"><span style="text-transform:capitalize">${n}</span><span class="badge info">${c}</span></div>`).join('')}`;
+    }
+    await loadThreats(); await loadStats();
+  }catch(e){showBanner('uploadBanner','error',`Error: ${e.message}`);}
+  finally{btn.disabled=false;btn.innerHTML='⚡ Analyze Now';}
+}
+
+// ── Live Monitor ───────────────────────────────────────────────────────────────
+async function detectLogPath(){
+  try{
+    const h=await get('/health');
+    const pi=h.platform||{};
+    let p='';
+    if(pi.system==='Linux') p='/var/log/apache2/access.log';
+    else if(pi.system==='Darwin') p='/var/log/apache2/access_log';
+    else if(pi.system==='Windows') p='C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex.log';
+    document.getElementById('monPath').value=p;
+    showToast('Log path auto-detected for '+pi.display);
+  }catch(e){}
+}
+
+async function startMonitor(){
+  const path=document.getElementById('monPath').value.trim();
+  if(!path){showToast('Enter a log file path first');return;}
+  try{
+    const r=await post('/monitor/start',{path});
+    if(r.error){showToast('Error: '+r.error);return;}
+    monitorActive=true;
+    document.getElementById('monStartBtn').disabled=true;
+    document.getElementById('monStopBtn').disabled=false;
+    document.getElementById('monitorStatus').style.display='';
+    startSSE();
+  }catch(e){showToast('Failed: '+e.message);}
+}
+
+function stopMonitor(){
+  fetch(`${API}/monitor/stop`,{method:'POST'});
+  monitorActive=false;
+  if(evtSource){evtSource.close();evtSource=null;}
+  document.getElementById('monStartBtn').disabled=false;
+  document.getElementById('monStopBtn').disabled=true;
+  document.getElementById('monitorStatus').style.display='none';
+  addLiveLine('Monitor stopped','info');
+}
+
+function startSSE(){
+  if(evtSource) evtSource.close();
+  evtSource=new EventSource(`${API}/stream`);
+  evtSource.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='threat'){
+      const t=d.record||{};
+      const si=sevInfo(t.severity||5);
+      addLiveLine(`[THREAT] ${si.label.toUpperCase()} ${(t.threat_type||'').replace(/_/g,' ').toUpperCase()} — ${t.ip_address} — ${d.line}`,'threat');
+      loadThreats(); loadStats();
+    } else if(d.type==='line'){
+      addLiveLine(d.line,'ok');
+    } else if(d.type==='error'){
+      addLiveLine('[ERROR] '+d.message,'warn');
+    }
+  };
+}
+
+function addLiveLine(text,type='ok'){
+  const el=document.getElementById('liveLog');
+  const div=document.createElement('div');
+  div.className='live-line '+(type==='threat'?'threat':type==='warn'?'warn':'');
+  const tag=document.createElement('span');
+  tag.className='live-tag '+(type==='threat'?'lt-threat':type==='warn'?'lt-info':'lt-ok');
+  tag.textContent=type==='threat'?'THREAT':type==='warn'?'WARN':'LOG';
+  const txt=document.createElement('span');
+  txt.textContent=text;
+  div.appendChild(tag); div.appendChild(txt);
+  el.appendChild(div);
+  if(el.children.length>200) el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
+
+// ── Blocked IPs ───────────────────────────────────────────────────────────────
+async function loadBlocked(){
+  try{
+    const live=await get('/blocked-ips');
+    const blkEl=document.getElementById('blockedList');
+    const sub=document.getElementById('blockedSub');
+    sub.textContent=`${live.length} active block${live.length!==1?'s':''}`;
+    document.getElementById('navBlocked').textContent=live.length;
+    if(!live.length){
+      blkEl.innerHTML=`<div class="empty"><div class="empty-ic">🚫</div><div class="empty-t">No IPs currently blocked</div><div class="empty-d">IPS will auto-block on severity ≥ threshold</div></div>`;
+    } else {
+      blkEl.innerHTML=live.map(b=>`<div class="ip-row">
+        <div>
+          <div class="ip-addr">${b.ip}</div>
+          <div style="font-size:.65rem;color:var(--t2);margin-top:2px">${(b.reason||'').slice(0,80)}</div>
+        </div>
+        <div class="ip-right">
+          <span class="badge critical">Blocked</span>
+          <span class="ip-time">${(b.blocked_at||'').slice(0,19)}</span>
+          <button class="btn btn-success btn-xs" onclick="unblockIp('${b.ip}')">Unblock</button>
+        </div>
+      </div>`).join('');
+    }
+
+    // DB blocked
+    const dbBlk=threats.filter(t=>t.blocked);
+    const dbEl=document.getElementById('dbBlockedList');
+    if(!dbBlk.length){
+      dbEl.innerHTML=`<div style="font-size:.72rem;color:var(--t2);text-align:center;padding:18px">No historical blocks</div>`;
+    } else {
+      dbEl.innerHTML=`<div class="tbl-wrap"><table>
+        <thead><tr><th>IP</th><th>Threat</th><th>Severity</th><th>Time</th><th></th></tr></thead>
+        <tbody>${dbBlk.slice(0,20).map(t=>{
+          const si=sevInfo(t.severity);
+          return `<tr>
+            <td style="font-family:var(--fm);font-size:.7rem">${t.ip_address}</td>
+            <td style="text-transform:capitalize;font-size:.72rem">${(t.threat_type||'').replace(/_/g,' ')}</td>
+            <td><span class="badge ${si.cls}">${si.label}</span></td>
+            <td style="color:var(--t2);font-size:.68rem">${(t.timestamp||'').slice(0,16)}</td>
+            <td><button class="btn btn-ghost btn-xs" onclick="showFw('${t.ip_address}','${(t.firewall_command||'').replace(/'/g,"\\'")}')">Commands</button></td>
+          </tr>`;}).join('')}</tbody></table></div>`;
+    }
+  } catch(e){}
+}
+
+async function unblockIp(ip){
+  await post('/blocked-ips/unblock',{ip});
+  showToast(`${ip} unblocked`); loadBlocked();
+}
+
+async function manualBlock(){
+  const ip=document.getElementById('manualIP').value.trim();
+  const reason=document.getElementById('manualReason').value.trim()||'Manual block';
+  if(!ip){showToast('Enter an IP address');return;}
+  await post('/blocked-ips/unblock',{ip}); // ensure removed first
+  // call analyze endpoint with synthetic log
+  const mockEv={ip,reasons:[reason],threat_type:'manual',sev_override:8,cve:'',raw_log:`Manual block: ${ip}`,timestamp:'',method:'',path:'',status:'',user_agent:''};
+  showToast(`${ip} added to block list`);
+  loadBlocked();
+}
+
+function showFw(ip, fwJson){
+  let cmds={};
+  try{cmds=JSON.parse(fwJson);}catch(e){}
+  const el=document.getElementById('fwPanel');
+  const plats=[['Linux UFW',cmds.linux_ufw],['iptables',cmds.linux_iptables],['nftables',cmds.linux_nftables],['macOS pf',cmds.macos_pf],['Windows FW',cmds.windows_firewall],['PowerShell',cmds.windows_powershell],['Nginx',cmds.nginx_block],['Apache',cmds.apache_block],['Cisco',cmds.cisco_acl]].filter(([,v])=>v);
+  el.innerHTML=`<div style="font-size:.72rem;font-weight:600;color:var(--t1);margin-bottom:10px">Commands for ${ip}:</div>
+    ${plats.map(([lbl,cmd])=>`<div class="fw-row"><div class="fw-lbl">${lbl}</div>
+      <div class="fw-code" onclick="copyCmd('${cmd.replace(/'/g,"\\'")}',this)">
+        <span class="fw-code-txt">${esc(cmd)}</span><span class="fw-copy">copy</span>
+      </div></div>`).join('')}`;
+}
+
+// ── Alert Channels ─────────────────────────────────────────────────────────────
+async function loadChannelConfig(){
+  try{
+    const c=await get('/config');
+    cfgCache=c;
+    const f=id=>document.getElementById(id);
+    if(f('slackUrl')) f('slackUrl').value=c.slack_webhook||'';
+    if(f('discordUrl')) f('discordUrl').value=c.discord_webhook||'';
+    if(f('emailHost')) f('emailHost').value=c.email_host||'smtp.gmail.com';
+    if(f('emailPort')) f('emailPort').value=c.email_port||587;
+    if(f('emailUser')) f('emailUser').value=c.email_user||'';
+    if(f('emailPass')) f('emailPass').value='';
+    if(f('emailTo')) f('emailTo').value=c.email_to||'';
+    if(f('emailFrom')) f('emailFrom').value=c.email_from||'';
+    // statuses
+    setChStatus('slackStatus', c.slack_webhook);
+    setChStatus('discordStatus', c.discord_webhook);
+    setChStatus('emailStatus', c.email_to && c.email_user);
+  }catch(e){}
+}
+
+function setChStatus(id, configured){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML=configured ? `<span class="badge ok">✓ Connected</span>` : `<span class="badge medium">Not configured</span>`;
+}
+
+async function saveChannel(ch){
+  let data={};
+  if(ch==='slack') data={slack_webhook:document.getElementById('slackUrl').value.trim()};
+  else if(ch==='discord') data={discord_webhook:document.getElementById('discordUrl').value.trim()};
+  else if(ch==='email') data={
+    email_host:document.getElementById('emailHost').value.trim(),
+    email_port:parseInt(document.getElementById('emailPort').value)||587,
+    email_user:document.getElementById('emailUser').value.trim(),
+    email_pass:document.getElementById('emailPass').value||'***',
+    email_to:document.getElementById('emailTo').value.trim(),
+    email_from:document.getElementById('emailFrom').value.trim(),
+  };
+  try{
+    await post('/config',data);
+    showBanner('channelBanner','success',`${cap(ch)} settings saved`);
+    setChStatus(ch+'Status', Object.values(data).some(v=>v&&v!=='***'));
+    await loadHealth();
+  }catch(e){showBanner('channelBanner','error','Save failed: '+e.message);}
+}
+
+async function testChannel(ch){
+  let url='';
+  if(ch==='slack') url=document.getElementById('slackUrl').value.trim();
+  else if(ch==='discord') url=document.getElementById('discordUrl').value.trim();
+  try{
+    showBanner('channelBanner','info',`Sending test alert to ${ch}…`);
+    const r=await post('/test-alert',{channel:ch,url});
+    if(r.ok) showBanner('channelBanner','success',`Test alert sent via ${cap(ch)} successfully`);
+    else showBanner('channelBanner','error',`Failed: ${r.error}`);
+  }catch(e){showBanner('channelBanner','error',e.message);}
+}
+
+// ── Configuration ──────────────────────────────────────────────────────────────
+async function loadCfg(){
+  try{
+    const c=await get('/config'); cfgCache=c;
+
+    // Groq key — never show the real value, but indicate if one is saved
+    const groqEl = document.getElementById('cfgGroqKey');
+    if (groqEl) {
+      groqEl.value = '';
+      const hasKey = c.groq_api_key && c.groq_api_key !== 'your_groq_api_key_here' && c.groq_api_key !== '***';
+      groqEl.placeholder = hasKey
+        ? (c.groq_api_key.slice(0,8) + '••••••••••••  (key saved)')
+        : 'gsk_…';
+    }
+
+    setVal('cfgThreshold', c.auto_block_threshold||7);
+    setVal('cfgDdosRps',   c.ddos_rps_threshold||50);
+    setVal('cfgDdosWin',   c.ddos_window_seconds||10);
+    setVal('cfgMaxEvents', c.max_analyze_per_upload||50);
+    setVal('cfgMonPath',   c.monitor_log_path||'');
+    const ipsEl=document.getElementById('cfgIpsMode');
+    if(ipsEl) ipsEl.checked=c.ips_mode!==false;
+  }catch(e){}
+}
+
+async function saveCfgField(key, inputId, btnId) {
+  const inputEl = document.getElementById(inputId);
+  const val = inputEl?.value?.trim();
+  if (!val) { showBanner('cfgBanner','warning','Please enter a value before saving.'); return; }
+
+  const btn = btnId ? document.getElementById(btnId) : null;
+  const origLabel = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  try {
+    const r = await post('/config', {[key]: val});
+    if (r.status !== 'saved') throw new Error('Server did not confirm save');
+
+    // Show masked value so user knows it's stored
+    if (inputEl.type === 'password') {
+      inputEl.value = '';
+      inputEl.placeholder = val.slice(0,8) + '••••••••••••  (saved)';
+    }
+
+    // Green checkmark on button
+    if (btn) {
+      btn.textContent = '✓ Saved';
+      btn.style.background = 'rgba(48,196,138,.15)';
+      btn.style.color = 'var(--low)';
+      btn.style.borderColor = 'rgba(48,196,138,.3)';
+      setTimeout(() => {
+        btn.textContent = origLabel;
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+      }, 2500);
+    }
+
+    showBanner('cfgBanner','success', key === 'groq_api_key'
+      ? 'Groq API key saved — AI analysis is now active.'
+      : 'Setting saved successfully.');
+    await loadHealth();
+  } catch(e) {
+    showBanner('cfgBanner','error','Save failed: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = origLabel; }
+  }
+}
+
+async function saveCfgTuning(){
+  const data={
+    auto_block_threshold:  parseInt(document.getElementById('cfgThreshold')?.value)||7,
+    ddos_rps_threshold:    parseInt(document.getElementById('cfgDdosRps')?.value)||50,
+    ddos_window_seconds:   parseInt(document.getElementById('cfgDdosWin')?.value)||10,
+    max_analyze_per_upload:parseInt(document.getElementById('cfgMaxEvents')?.value)||50,
+  };
+  try{
+    await post('/config',data);
+    showBanner('cfgBanner','success','IPS/IDS settings saved');
+    await loadHealth();
+  }catch(e){showBanner('cfgBanner','error',e.message);}
+}
+
+async function saveToggle(key,inputId){
+  const val=document.getElementById(inputId)?.checked;
+  try{ await post('/config',{[key]:val}); await loadHealth(); }catch(e){}
+}
+
+// ── Reports ────────────────────────────────────────────────────────────────────
+function downloadReport(fmt){ window.location.href=`${API}/report/${fmt}`; }
+
+// ── Utilities ──────────────────────────────────────────────────────────────────
+async function clearDB(){
+  if(!confirm('Clear all threat data from the database?')) return;
+  await post('/threats/clear',{});
+  threats=[]; renderFeed(); renderDashFeed(); renderBreakdown(); loadStats();
+}
+
+function showBanner(id,type,msg,loading=false){
+  const icons={info:'ℹ',success:'✓',error:'✕',warning:'⚠'};
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML=`<div class="alert ${type}"><span class="alert-icon">${icons[type]||'•'}</span><div style="flex:1">${msg}${loading?'<div class="pb"><div class="pb-fill"></div></div>':''}</div></div>`;
+}
+
+function showToast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=(type==='ok'?'✓ ':'⚠ ')+msg;
+  t.style.borderColor=type==='ok'?'var(--b2)':'var(--high)';
+  t.classList.add('show');
+  clearTimeout(t._to); t._to=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+function copyCmd(text,el){
+  navigator.clipboard.writeText(text).then(()=>{
+    const b=el.querySelector('.fw-copy');
+    if(b){b.textContent='copied!';b.style.color='var(--low)';setTimeout(()=>{b.textContent='copy';b.style.color=''},1800);}
+    showToast('Command copied');
+  });
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v}
+
+async function get(path){const r=await fetch(`${API}${path}`);return r.json()}
+async function post(path,data){const r=await fetch(`${API}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});return r.json()}
+async function post_form(path,fd){const r=await fetch(`${API}${path}`,{method:'POST',body:fd});return r.json()}
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const s = await get('/auth/status');
+    if (s.needs_setup) {
+      showAuthScreen('setup');
+    } else if (!s.authenticated) {
+      showAuthScreen('login');
+    } else {
+      hideAuthScreen(s.username);
+    }
+  } catch(e) {
+    showAuthScreen('login');
+  }
+}
+
+function showAuthScreen(mode) {
+  document.getElementById('authScreen').style.display = 'block';
+  document.getElementById('loginForm').style.display  = mode === 'login' ? '' : 'none';
+  document.getElementById('setupForm').style.display  = mode === 'setup' ? '' : 'none';
+  if (mode === 'login') setTimeout(() => document.getElementById('loginUser').focus(), 100);
+  if (mode === 'setup') setTimeout(() => document.getElementById('setupUser').focus(), 100);
+}
+
+function hideAuthScreen(username) {
+  document.getElementById('authScreen').style.display = 'none';
+  if (username) document.getElementById('tbUsername').textContent = username;
+}
+
+async function submitLogin() {
+  const btn  = document.getElementById('loginBtn');
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+
+  if (!user || !pass) {
+    showInline(errEl, 'error', 'Please enter username and password.');
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const r = await post('/auth/login', {username: user, password: pass});
+    if (r.status === 'ok') {
+      document.getElementById('loginPass').value = '';
+      hideAuthScreen(r.username);
+      errEl.style.display = 'none';
+      await loadHealth(); await loadThreats(); await loadStats();
+    } else {
+      showInline(errEl, 'error', r.error || 'Login failed.');
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  } catch(e) {
+    showInline(errEl, 'error', e.message.includes('429') ? 'Too many attempts. Wait 60 seconds.' : 'Connection error.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+async function submitSetup() {
+  const btn      = document.getElementById('setupBtn');
+  const user     = document.getElementById('setupUser').value.trim();
+  const pass     = document.getElementById('setupPass').value;
+  const confirm  = document.getElementById('setupPassConfirm').value;
+  const errEl    = document.getElementById('setupError');
+
+  if (!user || user.length < 3) { showInline(errEl,'error','Username must be at least 3 characters.'); return; }
+  if (pass.length < 8)           { showInline(errEl,'error','Password must be at least 8 characters.'); return; }
+  if (pass !== confirm)           { showInline(errEl,'error','Passwords do not match.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const r = await post('/auth/setup', {username: user, password: pass});
+    if (r.status === 'created') {
+      hideAuthScreen(r.username);
+      showToast('Admin account created. Welcome!');
+      await loadHealth(); await loadThreats(); await loadStats();
+    } else {
+      showInline(errEl,'error', r.error || 'Setup failed.');
+    }
+  } catch(e) {
+    showInline(errEl,'error','Error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Account & Enter Dashboard';
+  }
+}
+
+async function logout() {
+  if (!confirm('Sign out of CyberGuard AI?')) return;
+  await post('/auth/logout', {});
+  showAuthScreen('login');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+async function changePassword() {
+  const btn     = document.getElementById('cpBtn');
+  const current = document.getElementById('cpCurrent').value;
+  const newPw   = document.getElementById('cpNew').value;
+  const confirm = document.getElementById('cpConfirm').value;
+  const banner  = 'cpBanner';
+
+  if (!current)          { showBanner(banner,'warning','Enter your current password.'); return; }
+  if (newPw.length < 8)  { showBanner(banner,'warning','New password must be at least 8 characters.'); return; }
+  if (newPw !== confirm) { showBanner(banner,'error','Passwords do not match.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Updating…';
+  try {
+    const r = await post('/auth/change-password', {current_password: current, new_password: newPw});
+    if (r.status === 'changed') {
+      showBanner(banner,'success','Password updated successfully.');
+      document.getElementById('cpCurrent').value = '';
+      document.getElementById('cpNew').value     = '';
+      document.getElementById('cpConfirm').value = '';
+    } else {
+      showBanner(banner,'error', r.error || 'Update failed.');
+    }
+  } catch(e) {
+    showBanner(banner,'error', e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Update Password';
+  }
+}
+
+function checkPassStrength(val, barId='passStrengthBar', labelId='passStrengthLabel') {
+  const bar   = document.getElementById(barId);
+  const label = document.getElementById(labelId);
+  if (!bar || !label) return;
+  let score = 0;
+  if (val.length >= 8)  score++;
+  if (val.length >= 12) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    {w:'0%',   c:'transparent',     t:''},
+    {w:'20%',  c:'var(--critical)', t:'Very weak'},
+    {w:'40%',  c:'var(--high)',     t:'Weak'},
+    {w:'60%',  c:'var(--medium)',   t:'Fair'},
+    {w:'80%',  c:'var(--brand)',    t:'Strong'},
+    {w:'100%', c:'var(--low)',      t:'Very strong'},
+  ];
+  const l = levels[Math.min(score, 5)];
+  bar.style.width = l.w; bar.style.background = l.c;
+  label.textContent = l.t; label.style.color = l.c;
+}
+
+function togglePass(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+function showInline(el, type, msg) {
+  const icons = {error:'✕',warning:'⚠',success:'✓'};
+  el.style.display = '';
+  el.innerHTML = `<div class="alert ${type}"><span class="alert-icon">${icons[type]||'•'}</span><span>${msg}</span></div>`;
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+checkAuth().then(() => {
+  // Only load data if authenticated (checkAuth hides authScreen)
+  if (document.getElementById('authScreen').style.display === 'none') {
+    loadHealth(); loadThreats(); loadStats();
+  }
+});
+setInterval(loadStats, 5000);
+setInterval(loadThreats, 14000);
+setInterval(loadHealth, 30000);
+</script>
+</body>
+</html>

