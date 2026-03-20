@@ -176,4 +176,4 @@ Firewall commands are generated for **all platforms simultaneously** (UFW, iptab
 
 ---
 
-MIT License — Open Source
+-— Open Source
